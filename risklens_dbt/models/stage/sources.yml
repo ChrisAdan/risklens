@@ -1,0 +1,18 @@
+version: 2
+
+sources:
+  - name: raw_loans
+    database: risklens
+    schema: main
+    description: "Raw LendingClub data loaded to DuckDB via extract.py"
+    tables:
+      - name: raw_loans_accepted
+        description: "Accepted loan applications"
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: loan_status
+      - name: raw_loans_rejected
+        description: "Rejected loan applications"
