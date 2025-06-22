@@ -29,4 +29,9 @@ clean-targets: # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   risklens_dbt:
-    +materialized: view
+    stage:
+      schema: stage
+      +materialized: view
+    features_core:
+      schema: features_core
+      +materialized: view
