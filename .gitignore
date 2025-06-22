@@ -2,3 +2,4 @@
 *.wal
 *.tmp/
 *.gz
+logs/
