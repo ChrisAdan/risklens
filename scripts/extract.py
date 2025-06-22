@@ -2,7 +2,9 @@ import duckdb
 from pathlib import Path
 from kaggle.api.kaggle_api_extended import KaggleApi
 
-DATA_DIR = Path('data')
+PROJECT_DIR = Path(__file__).parent.parent.resolve()
+
+DATA_DIR = PROJECT_DIR / 'data'
 
 RAW_DIR = DATA_DIR / 'raw'
 CLEANED_DIR = DATA_DIR / 'cleaned'
