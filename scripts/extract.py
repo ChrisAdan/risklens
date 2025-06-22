@@ -49,7 +49,8 @@ def load_into_duckdb(db_path: Path, raw_dir: Path, files: dict[str, str]):
             create or replace table {table} as 
             select * from read_csv_auto(
                 '{file_path}',
-                header=True)
+                header=True,
+                types={{'Application Date':'timestamp'}})
                         ''')
     con.close()
     print('Loaded all tables to DuckDB')
