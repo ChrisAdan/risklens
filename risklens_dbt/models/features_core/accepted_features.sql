@@ -5,7 +5,6 @@ select
     annual_income,
     null as dti_ratio,
     case when loan_amount > 0 then annual_income / loan_amount else null end as income_to_loan_ratio,
-    case when annual_income > 0 then loan_amount / annual_income else null end as credit_utilization,
     (fico_range_low + fico_range_high)/2.0 as fico_avg,
     interest_rate/100 as int_rate_pct,
     case

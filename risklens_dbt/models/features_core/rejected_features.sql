@@ -14,7 +14,6 @@ select
     meds.med_annual_income as annual_income,
     loans.dti_ratio,
     null as income_to_loan_ratio,
-    null as credit_utilization,
     null as fico_avg,
     null as int_rate_pct,
     null as home_ownership_cat,
