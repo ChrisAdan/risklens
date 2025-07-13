@@ -3,3 +3,7 @@
 *.tmp/
 *.gz
 logs/
+model/*.joblib
+.streamlit/
+__pycache__/
+.DS_Store
