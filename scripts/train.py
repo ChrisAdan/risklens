@@ -17,9 +17,39 @@ RANDOM_STATE = 12345
 
 def get_data():
     con = duckdb.connect(database=DB, read_only=True)
+    
+    # Load full dataset
+    df = con.execute('select * from main_features_core.loan_acceptance_dataset').df()
+    print(f'Original columns: {df.columns.tolist()}')
+    print("Original class counts:")
+    print(df['was_accepted'].value_counts())
 
-    df = con.execute('select * from main_features_core.loan_acceptance_dataset limit 10').df()
-    return df
+    # Split by class
+    accepted = df[df['was_accepted'] == 1]
+    rejected = df[df['was_accepted'] == 0]
+
+    # Get the minority count
+    n = min(len(accepted), len(rejected))
+    print(f"Balancing to {n} samples per class")
+
+    # Sample equal counts from each
+    accepted_bal = accepted.sample(n=n, random_state=RANDOM_STATE)
+    rejected_bal = rejected.sample(n=n, random_state=RANDOM_STATE)
+
+    # Combine & shuffle
+    balanced_df = pd.concat([accepted_bal, rejected_bal]).sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
+
+    print("Balanced class counts:")
+    print(balanced_df['was_accepted'].value_counts())
+    print(f"Balanced total rows: {len(balanced_df)}")
+
+    # Optional: limit for fast testing
+    max_rows = 10000
+    if len(balanced_df) > max_rows:
+        balanced_df = balanced_df.sample(n=max_rows, random_state=RANDOM_STATE).reset_index(drop=True)
+        print(f"Truncated to {max_rows} rows for training speed.")
+
+    return balanced_df
 
 def prepare_model_input(df, feature_cols):
     numeric_feats = [col for col in feature_cols if df[col].dtype in ('int64', 'float64')]
@@ -30,23 +60,30 @@ def prepare_model_input(df, feature_cols):
          verbose_feature_names_out=False
     )
     X = preproc.fit_transform(df[feature_cols])
+    print("Preprocessor expected features:", preproc.feature_names_in_)
+    print("Input df columns:", df[feature_cols].columns.tolist())
+
     return X, preproc
 
 def train_model(df, feature_cols, target_col, model_path):
     X, preproc = prepare_model_input(df, feature_cols)
     y = df[target_col]
-    X_train, X_test, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=RANDOM_STATE)
     model = RandomForestClassifier(n_estimators=100, random_state=RANDOM_STATE)
     model.fit(X_train, y_train)
+    print("Train Accuracy:", model.score(X_train, y_train))
+    print("Test split:", y_test.value_counts())
+    print("Train split:", y_train.value_counts())
     model_path.parent.mkdir(parents=True, exist_ok=True)
     dump((preproc, model), model_path)
     print(f'Trained and saved model for {target_col} at {model_path}')
 
 if __name__ == '__main__':
+    print('Training model')
     input_data = get_data()
     features = [
         'loan_amount', 'employment_length', 'annual_income',
-        'income_to_loan_ratio', 'credit_utilization', 'fico_avg',
+        'income_to_loan_ratio', 'fico_avg',
         'int_rate_pct', 'home_ownership_cat',
         'purpose_debt_consolidation', 'purpose_credit_card',
         'purpose_home_improvement', 'purpose_major_purchase',
